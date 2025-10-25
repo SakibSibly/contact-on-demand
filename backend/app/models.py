@@ -4,9 +4,8 @@ import uuid
 
 
 class UserBase(SQLModel):
-    name: str = Field(default=None, index=True, max_length=50)
+    username: str = Field(default=None, index=True, max_length=50)
     email: EmailStr = Field(default=None, index=True, max_length=100)
-    password: str = Field(default=None, max_length=256)
 
 
 class User(UserBase, table=True):
@@ -14,10 +13,15 @@ class User(UserBase, table=True):
     hashed_password: str = Field(default=None, max_length=256)
     security_qas: list["SecurityQA"] = Relationship(back_populates="user", cascade_delete=True)
     contacts: list["Contact"] = Relationship(back_populates="user", cascade_delete=True)
-    
+
+
+class UserLogin(SQLModel):
+    username: str = Field(default=None, max_length=50)
+    password: str = Field(default=None, max_length=256)
+
 
 class UserCreate(UserBase):
-    pass
+    password: str = Field(default=None, max_length=256)
 
 
 class SecurityQABase(SQLModel):
@@ -66,3 +70,18 @@ class Phone(PhoneBase, table=True):
 
 class PhoneCreate(PhoneBase):
     pass
+
+
+class TokenResponse(SQLModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class TokenRefresh(SQLModel):
+    refresh_token: str
+
+
+class TokenBlacklist(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    token: str = Field(index=True, unique=True)
