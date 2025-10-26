@@ -18,11 +18,7 @@ security = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using SHA-256 with salt."""
-    # Add a salt for extra security
-    salt = SECRET_KEY[:16]  # Use part of SECRET_KEY as salt
-    password_with_salt = salt + password
-    return hashlib.sha256(password_with_salt.encode()).hexdigest()
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
