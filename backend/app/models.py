@@ -12,16 +12,16 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
     hashed_password: str = Field(default=None, max_length=256)
     security_qas: list["SecurityQA"] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}, cascade_delete=True)
-    phones: list["Phone"] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}, cascade_delete=True)
+    contacts: list["Contact"] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}, cascade_delete=True)
 
 
 class UserPublic(UserBase):
     id: uuid.UUID
 
 
-class UserBaseWithPhoneAndQuestion(UserBase):
+class UserBaseWithContactAndQuestion(UserBase):
     id: uuid.UUID
-    phones: list["Phone"] = []
+    contacts: list["Contact"] = []
     security_qas: list["SecurityQA"] = []
 
 
@@ -54,20 +54,41 @@ class SecrurityQACreate(SecurityQABase):
     pass
 
 
+class ContactBase(SQLModel):
+    name: str = Field(default=None, max_length=100)
+    email: EmailStr | None = Field(default=None, max_length=100)
+    user_id: uuid.UUID | None = Field(default=None, foreign_key="user.id", ondelete="CASCADE")
+
+
+class Contact(ContactBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
+    user: User | None = Relationship(back_populates="contacts", sa_relationship_kwargs={"lazy": "joined"})
+    phones: list["Phone"] = Relationship(back_populates="contact", sa_relationship_kwargs={"lazy": "selectin"}, cascade_delete=True)
+
+
+class ContactWithPhones(ContactBase):
+    id: uuid.UUID
+    phones: list["Phone"] = []
+
+
+class ContactCreate(ContactBase):
+    pass
+
+
 class PhoneBase(SQLModel):
     number: str = Field(default=None, max_length=20)
     number_type: str | None = Field(default=None, max_length=50)
-    user_id: uuid.UUID | None = Field(default=None, foreign_key="user.id", ondelete="CASCADE")
+    contact_id: uuid.UUID | None = Field(default=None, foreign_key="contact.id", ondelete="CASCADE")
 
 
 class Phone(PhoneBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True, index=True)
-    user: User | None = Relationship(back_populates="phones", sa_relationship_kwargs={"lazy": "joined"})
+    contact: Contact | None = Relationship(back_populates="phones", sa_relationship_kwargs={"lazy": "joined"})
 
 
-class PhoneWithUser(PhoneBase):
+class PhoneWithContact(PhoneBase):
     id: uuid.UUID
-    user: UserPublic | None = None
+    contact: ContactBase | None = None
 
 
 class PhoneCreate(PhoneBase):
