@@ -39,7 +39,8 @@ async def register(session: Annotated[Session, Depends(get_session)], user: User
 async def login(session: Annotated[Session, Depends(get_session)], user: UserLogin):
     """Login and get access and refresh tokens."""
     # Verify user credentials
-    db_user = (await session.exec(select(User).where(User.username == user.username))).first()
+    result = await session.exec(select(User).where(User.username == user.username))
+    db_user = result.first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
