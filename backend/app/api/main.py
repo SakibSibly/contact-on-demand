@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.routers import login, phones, security_qas, users, utils
+from app.api.routers import contacts, login, phones, security_qas, users, utils
 
 app = FastAPI(
     title="Contact On Demand API",
@@ -15,6 +15,7 @@ async def greet():
 
 
 app.include_router(login.router)
+app.include_router(contacts.router)
 app.include_router(phones.router)
 app.include_router(security_qas.router)
 app.include_router(users.router)
