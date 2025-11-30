@@ -73,19 +73,19 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
       )}
       onClick={() => onExpand(contact.id)}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <Avatar className={getAvatarColor(contact.name)}>
-              <AvatarFallback className="text-white">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <Avatar className={cn(getAvatarColor(contact.name), "h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0")}>
+              <AvatarFallback className="text-white text-sm sm:text-base">
                 {getInitials(contact.name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base truncate">{contact.name}</h3>
+              <h3 className="font-semibold text-sm sm:text-base truncate">{contact.name}</h3>
               {contact.email && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
-                  <Mail className="h-3 w-3" />
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  <Mail className="h-3 w-3 flex-shrink-0" />
                   <span className="truncate">{contact.email}</span>
                 </div>
               )}
@@ -98,12 +98,12 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
               )}
             </div>
           </div>
-          <div className="ml-2 flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleDeleteContact}
-              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
