@@ -25,6 +25,15 @@ async def register(session: Annotated[Session, Depends(get_session)], user: User
             detail="Username already registered"
         )
     
+    # Check if email already exists
+    result = await session.exec(select(User).where(User.email == user.email))
+    existing_email = result.first()
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
     # Hash password and store user
     hashed_password = hash_password(user.password)
     db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
