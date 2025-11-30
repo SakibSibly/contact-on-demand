@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ContactList } from '../components/ContactList';
 import { AddContactDialog } from '../components/AddContactDialog';
+import { UploadVCFDialog } from '../components/UploadVCFDialog';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
@@ -93,6 +94,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
                 <div className="flex gap-2">
                   <AddContactDialog userId={user.id} onContactAdded={handleRefresh} />
+                  <UploadVCFDialog userId={user.id} onContactsUploaded={handleRefresh} />
                   <Button onClick={handleRefresh} disabled={refreshing} variant="outline" size="sm">
                     {refreshing ? 'Refreshing...' : 'Refresh'}
                   </Button>
