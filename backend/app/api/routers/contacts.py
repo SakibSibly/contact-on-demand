@@ -133,6 +133,22 @@ async def upload_vcf(
                 if hasattr(vcard, 'email'):
                     email = vcard.email.value if hasattr(vcard.email, 'value') else str(vcard.email)
                 
+                # Check if contact already exists (same name and email for this user)
+                existing_query = select(Contact).where(
+                    Contact.user_id == uuid.UUID(user_id),
+                    Contact.name == name
+                )
+                if email:
+                    existing_query = existing_query.where(Contact.email == email)
+                
+                result = await session.exec(existing_query)
+                existing_contact = result.first()
+                
+                if existing_contact:
+                    # Contact already exists, skip it
+                    contacts_skipped += 1
+                    continue
+                
                 # Create contact
                 contact_data = ContactCreate(
                     name=name,
