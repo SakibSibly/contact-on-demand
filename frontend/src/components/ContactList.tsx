@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { contactsAPI } from '../lib/api';
 import type { Contact } from '../lib/types';
-import { ContactCard } from '../components/ContactCard';
+import { ContactCard } from './ContactCard';
 import { Input } from '../components/ui/input';
 import { Search } from 'lucide-react';
 
