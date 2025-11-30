@@ -26,6 +26,6 @@ async def greet():
 app.include_router(login.router)
 app.include_router(contacts.router)
 app.include_router(phones.router)
-app.include_router(security_qas.router)
+app.include_router(security_qas.router, deprecated=True)
 app.include_router(users.router)
 app.include_router(utils.router)

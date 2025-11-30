@@ -3,7 +3,6 @@ export interface User {
   username: string;
   email: string;
   contacts: Contact[];
-  security_qas: SecurityQA[];
 }
 
 export interface Contact {
@@ -21,6 +20,7 @@ export interface Phone {
   contact_id: string;
 }
 
+// Deprecated - Security QA feature is no longer active
 export interface SecurityQA {
   id: string;
   question: string;

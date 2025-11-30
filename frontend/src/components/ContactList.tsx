@@ -10,7 +10,7 @@ interface ContactListProps {
   onContactUpdate: () => void;
 }
 
-export const ContactList: React.FC<ContactListProps> = ({ contacts }) => {
+export const ContactList: React.FC<ContactListProps> = ({ contacts, onContactUpdate }) => {
   const [expandedContactId, setExpandedContactId] = useState<string | null>(null);
   const [detailedContacts, setDetailedContacts] = useState<Map<string, Contact>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,15 +23,27 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts }) => {
 
     setExpandedContactId(contactId);
 
-    // Fetch detailed contact info if not already loaded
-    if (!detailedContacts.has(contactId)) {
+    // Fetch detailed contact info
+    try {
+      const detailedContact = await contactsAPI.getById(contactId);
+      setDetailedContacts(prev => new Map(prev).set(contactId, detailedContact));
+    } catch (error) {
+      console.error('Failed to fetch contact details:', error);
+    }
+  };
+
+  const handleContactUpdate = async () => {
+    // Refetch the expanded contact to get updated phone numbers
+    if (expandedContactId) {
       try {
-        const detailedContact = await contactsAPI.getById(contactId);
-        setDetailedContacts(prev => new Map(prev).set(contactId, detailedContact));
+        const detailedContact = await contactsAPI.getById(expandedContactId);
+        setDetailedContacts(prev => new Map(prev).set(expandedContactId, detailedContact));
       } catch (error) {
-        console.error('Failed to fetch contact details:', error);
+        console.error('Failed to refresh contact details:', error);
       }
     }
+    // Also call the parent update to refresh the contact list
+    onContactUpdate();
   };
 
   const filteredContacts = contacts.filter(contact =>
@@ -69,6 +81,7 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts }) => {
                 contact={displayContact}
                 onExpand={handleExpand}
                 isExpanded={expandedContactId === contact.id}
+                onUpdate={handleContactUpdate}
               />
             );
           })}

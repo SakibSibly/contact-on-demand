@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ContactList } from '../components/ContactList';
+import { AddContactDialog } from '../components/AddContactDialog';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
@@ -90,25 +91,18 @@ export const DashboardPage: React.FC = () => {
                     You have {user.contacts?.length || 0} contact{user.contacts?.length !== 1 ? 's' : ''} saved
                   </CardDescription>
                 </div>
-                <Button onClick={handleRefresh} disabled={refreshing} variant="outline" size="sm">
-                  {refreshing ? 'Refreshing...' : 'Refresh'}
-                </Button>
+                <div className="flex gap-2">
+                  <AddContactDialog userId={user.id} onContactAdded={handleRefresh} />
+                  <Button onClick={handleRefresh} disabled={refreshing} variant="outline" size="sm">
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <ContactList contacts={user.contacts || []} onContactUpdate={handleRefresh} />
             </CardContent>
           </Card>
-
-          {/* Security Questions Info (if any) */}
-          {user.security_qas && user.security_qas.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Security Questions</CardTitle>
-                <CardDescription>You have set up {user.security_qas.length} security question(s)</CardDescription>
-              </CardHeader>
-            </Card>
-          )}
         </div>
       </main>
     </div>

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 from typing import Annotated
 from app.db import get_session
-from app.models import Phone, PhoneBase, PhoneWithContact
+from app.models import Phone, PhoneBase, PhoneWithContact, PhoneCreate
 
 import uuid
 
@@ -33,8 +33,8 @@ async def read_phone(phone_id: uuid.UUID, session: Annotated[Session, Depends(ge
     return phone
 
 
-@router.post("/", response_model=PhoneBase)
-async def create_phone(phone: PhoneBase, session: Annotated[Session, Depends(get_session)]):
+@router.post("/", response_model=Phone)
+async def create_phone(phone: PhoneCreate, session: Annotated[Session, Depends(get_session)]):
     """Create a new phone entry."""
     db_phone = Phone.model_validate(phone)
     session.add(db_phone)
@@ -44,15 +44,15 @@ async def create_phone(phone: PhoneBase, session: Annotated[Session, Depends(get
     return db_phone
 
 
-@router.put("/{phone_id}", response_model=PhoneBase)
-async def update_phone(phone_id: uuid.UUID, phone: PhoneBase, session: Annotated[Session, Depends(get_session)]):
+@router.put("/{phone_id}", response_model=Phone)
+async def update_phone(phone_id: uuid.UUID, phone: PhoneCreate, session: Annotated[Session, Depends(get_session)]):
     """Update a phone by ID."""
     db_phone = await session.get(Phone, phone_id)
     if not db_phone:
         return {"detail": "Phone not found"}
 
     db_phone.number = phone.number
-    db_phone.type = phone.type
+    db_phone.number_type = phone.number_type
     await session.commit()
     await session.refresh(db_phone)
 

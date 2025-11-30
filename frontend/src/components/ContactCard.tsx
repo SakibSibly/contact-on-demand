@@ -3,16 +3,20 @@ import type { Contact } from '../lib/types';
 import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { ChevronDown, ChevronUp, Mail, Phone as PhoneIcon } from 'lucide-react';
+import { Button } from './ui/button';
+import { ChevronDown, ChevronUp, Mail, Phone as PhoneIcon, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { AddPhoneDialog } from './AddPhoneDialog';
+import { contactsAPI, phonesAPI } from '../lib/api';
 
 interface ContactCardProps {
   contact: Contact;
   onExpand: (contactId: string) => void;
   isExpanded: boolean;
+  onUpdate: () => void;
 }
 
-export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isExpanded }) => {
+export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isExpanded, onUpdate }) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -35,6 +39,30 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
     ];
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
+  };
+
+  const handleDeleteContact = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete ${contact.name}?`)) {
+      try {
+        await contactsAPI.delete(contact.id);
+        onUpdate();
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+      }
+    }
+  };
+
+  const handleDeletePhone = async (phoneId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this phone number?')) {
+      try {
+        await phonesAPI.delete(phoneId);
+        onUpdate();
+      } catch (error) {
+        console.error('Failed to delete phone:', error);
+      }
+    }
   };
 
   return (
@@ -70,7 +98,15 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
               )}
             </div>
           </div>
-          <div className="ml-2">
+          <div className="ml-2 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDeleteContact}
+              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-muted-foreground" />
             ) : (
@@ -81,21 +117,32 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
 
         {isExpanded && contact.phones && contact.phones.length > 0 && (
           <div className="mt-4 pt-4 border-t space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">Phone Numbers</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-muted-foreground">Phone Numbers</h4>
+              <AddPhoneDialog contactId={contact.id} onPhoneAdded={onUpdate} />
+            </div>
             {contact.phones.map((phone) => (
               <div
                 key={phone.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors group"
               >
                 <div className="flex items-center gap-2">
                   <PhoneIcon className="h-4 w-4 text-primary" />
                   <span className="font-medium">{phone.number}</span>
+                  {phone.number_type && (
+                    <Badge variant="outline" className="text-xs">
+                      {phone.number_type}
+                    </Badge>
+                  )}
                 </div>
-                {phone.number_type && (
-                  <Badge variant="outline" className="text-xs">
-                    {phone.number_type}
-                  </Badge>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => handleDeletePhone(phone.id, e)}
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             ))}
           </div>
@@ -103,8 +150,12 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onExpand, isE
 
         {isExpanded && (!contact.phones || contact.phones.length === 0) && (
           <div className="mt-4 pt-4 border-t">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-muted-foreground">Phone Numbers</h4>
+              <AddPhoneDialog contactId={contact.id} onPhoneAdded={onUpdate} />
+            </div>
             <p className="text-sm text-muted-foreground text-center py-2">
-              No phone numbers available
+              No phone numbers yet
             </p>
           </div>
         )}

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import status, HTTPException, Depends
 from sqlmodel import Session, select
 
-from app.models import User, UserBase, UserBaseWithContactAndQuestion, UserCreate, UserLogin, TokenResponse, TokenRefresh, TokenBlacklist
+from app.models import User, UserBase, UserBaseWithContact, UserCreate, UserLogin, TokenResponse, TokenRefresh, TokenBlacklist
 from app.api.deps import decode_token, hash_password, get_current_user, verify_password, create_access_token, create_refresh_token, decode_token
 from app.db import get_session
 from typing import Annotated
@@ -111,7 +111,7 @@ async def logout(session: Annotated[Session, Depends(get_session)], token_data: 
     return {"detail": "Successfully logged out"}
 
 
-@router.get("/users/me", response_model=UserBaseWithContactAndQuestion)
+@router.get("/users/me", response_model=UserBaseWithContact)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     """Get current user information (protected route)."""
     return current_user

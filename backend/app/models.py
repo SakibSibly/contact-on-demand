@@ -22,7 +22,13 @@ class UserPublic(UserBase):
 class UserBaseWithContactAndQuestion(UserBase):
     id: uuid.UUID
     contacts: list["Contact"] = []
-    security_qas: list["SecurityQA"] = []
+    # security_qas deprecated - keeping for backward compatibility but not returned by default
+
+
+class UserBaseWithContact(UserBase):
+    """User model with contacts only - recommended for API responses"""
+    id: uuid.UUID
+    contacts: list["Contact"] = []
 
 
 class UserLogin(SQLModel):
