@@ -35,18 +35,18 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-contact_on_demand}
       PYTHONPATH: /app
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS}
     ports:
       - "${API_PORT:-8000}:8000"
-    volumes:
-      - ./app:/app/app
-      - ./alembic.ini:/app/alembic.ini
     networks:
       - app_network
     command: >
       sh -c "
       echo 'Waiting for database...' &&
       sleep 5 &&
-      alembic upgrade head &&
       uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
