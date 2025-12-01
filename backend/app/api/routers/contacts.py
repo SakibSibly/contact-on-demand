@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlmodel import Session, select
 from typing import Annotated
 from app.db import get_session
-from app.models import Contact, ContactWithPhones, ContactCreate, Phone, PhoneCreate
+from app.models import Contact, ContactWithPhones, ContactCreate, Phone, PhoneCreate, User
+from app.api.deps import get_current_user
 import vobject
 
 import uuid
@@ -16,26 +17,45 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[ContactWithPhones])
-async def read_contacts(session: Annotated[Session, Depends(get_session)]):
-    """Endpoint to read contacts (example)."""
-    result = await session.exec(select(Contact))
+async def read_contacts(
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    """Endpoint to read contacts for the authenticated user."""
+    result = await session.exec(select(Contact).where(Contact.user_id == current_user.id))
     contacts = result.all()
 
     return contacts
 
 @router.get("/{contact_id}", response_model=ContactWithPhones)
-async def read_contact(contact_id: uuid.UUID, session: Annotated[Session, Depends(get_session)]):
+async def read_contact(
+    contact_id: uuid.UUID,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Get contact by ID, including associated phones."""
     contact = await session.get(Contact, contact_id)
     if not contact:
-        return {"detail": "Contact not found"}
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Verify the contact belongs to the current user
+    if contact.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this contact")
 
     return contact
 
 
 @router.post("/", response_model=ContactWithPhones)
-async def create_contact(contact: ContactCreate, session: Annotated[Session, Depends(get_session)]):
+async def create_contact(
+    contact: ContactCreate,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Create a new contact entry."""
+    # Ensure the contact is created for the current user
+    if contact.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to create contacts for other users")
+    
     db_contact = Contact.model_validate(contact)
     session.add(db_contact)
     await session.commit()
@@ -45,11 +65,20 @@ async def create_contact(contact: ContactCreate, session: Annotated[Session, Dep
 
 
 @router.put("/{contact_id}", response_model=Contact)
-async def update_contact(contact_id: uuid.UUID, contact: Contact, session: Annotated[Session, Depends(get_session)]):
+async def update_contact(
+    contact_id: uuid.UUID,
+    contact: Contact,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Update a contact by ID."""
     db_contact = await session.get(Contact, contact_id)
     if not db_contact:
-        return {"detail": "Contact not found"}
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Verify the contact belongs to the current user
+    if db_contact.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this contact")
 
     db_contact.name = contact.name
     db_contact.email = contact.email
@@ -61,11 +90,19 @@ async def update_contact(contact_id: uuid.UUID, contact: Contact, session: Annot
 
 
 @router.delete("/{contact_id}")
-async def delete_contact(contact_id: uuid.UUID, session: Annotated[Session, Depends(get_session)]):
+async def delete_contact(
+    contact_id: uuid.UUID,
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
+):
     """Delete a contact by ID."""
     db_contact = await session.get(Contact, contact_id)
     if not db_contact:
-        return {"detail": "Contact not found"}
+        raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Verify the contact belongs to the current user
+    if db_contact.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this contact")
 
     await session.delete(db_contact)
     await session.commit()
@@ -75,11 +112,16 @@ async def delete_contact(contact_id: uuid.UUID, session: Annotated[Session, Depe
 
 @router.post("/upload-vcf")
 async def upload_vcf(
-    file: UploadFile = File(...),
-    user_id: str = Form(...),
-    session: Session = Depends(get_session)
+    file: Annotated[UploadFile, File(...)],
+    user_id: Annotated[str, Form(...)],
+    session: Annotated[Session, Depends(get_session)],
+    current_user: Annotated[User, Depends(get_current_user)]
 ):
     """Upload a VCF file and create contacts with phone numbers."""
+    # Verify the user can only upload for themselves
+    if str(current_user.id) != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to upload contacts for other users")
+    
     if not file.filename.endswith(('.vcf', '.vcard')):
         raise HTTPException(status_code=400, detail="Only .vcf or .vcard files are supported")
     
